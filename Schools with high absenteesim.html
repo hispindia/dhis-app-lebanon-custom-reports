@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="IMC Custom Reporting App">
+        <meta name="author" content="Gaurav<gaurav08021@gmail.com>">
+        <link rel="shortcut icon" href="assets/ico/favicon.png">
+
+        <title>Custom Reports</title>
+        <!-- Bootstrap core CSS -->
+        <link href="assets/css/bootstrap.css" rel="stylesheet">
+        <!-- Jasny Bootstrap-Extension CSS -->
+        <link href="assets/css/jasny-bootstrap.css" rel="stylesheet">
+        <link href="assets/css/bootstrap-select.css" rel="stylesheet">
+        <link href="assets/css/bootstrap-datetimepicker.css" rel="stylesheet">
+        <!-- Custom styles for this template -->
+        <link href="assets/css/main.css" rel="stylesheet">
+        <link href='https://fonts.googleapis.com/css?family=Lato:300,400,700,300italic,400italic' rel='stylesheet'
+              type='text/css'>
+        <link href='https://fonts.googleapis.com/css?family=Raleway:400,300,700' rel='stylesheet' type='text/css'>
+        <link href='assets/css/bordered.css' rel='stylesheet' type='text/css'>
+
+
+        <script type="text/javascript" src="assets/js/jquery.min.js"></script>
+        <script type="text/javascript" src="assets/js/bootstrap.js"></script>
+        <script type="text/javascript" src="assets/js/jasny-bootstrap.js"></script>
+        <script type="text/javascript" src="assets/js/bootstrap-select.js"></script>
+        <script type="text/javascript" src="assets/js/moment.js"></script>
+        <script type="text/javascript" src="assets/js/bootstrap-datetimepicker.min.js"></script>
+        <script type="text/javascript" src="assets/js/exportExcel.js"></script>
+
+        <script type="text/javascript">
+            $(document).ready(function () {
+
+                //--------Get all parameters from session memory------//
+                var dhisBaseURL = sessionStorage.getItem('dhisBaseURL');
+                var startDate = sessionStorage.getItem('startDate');
+                var endDate = sessionStorage.getItem('endDate');
+                var periodList = sessionStorage.getItem('periodList');
+                //-----------------------------------------------------//
+
+                console.log(startDate);
+                console.log(endDate);
+                console.log(periodList);
+
+                var analyticsURL = dhisBaseURL+'/analytics.jsonp?dimension=dx:KfCmXpoCpmq&dimension=ou:LEVEL-5;HfcaAV1q2rW&displayProperty=NAME';
+
+                analyticsURL = analyticsURL + '&filter=pe:'+ periodList;
+
+                console.log(analyticsURL);
+
+                var getResponse = function(tValue){
+                    $.ajax({
+                        url: analyticsURL,
+                        dataType: "jsonp",
+                        async:false,
+                        data: {
+                            format: "json"
+                        },
+                        success: function (response) {
+                            console.log(response);
+                            for(var item in response.rows)
+                            {
+                                if(parseInt(tValue)<=parseInt(response.rows[item][2])){
+                                    $('#reportTable').append('<tr>' +
+                                    '<td>'+response.metaData.names[response.rows[item][1]]+'</td>' +
+                                    '<td>'+response.rows[item][2]+'</td>' +
+                                    '</tr>');
+                                    console.log(parseInt(tValue)+","+parseInt(response.rows[item][2]));
+                                    console.log(response.metaData.names[response.rows[item][1]]+":"+response.rows[item][2]);
+                                }
+                            }
+                            $('#reportTable').show();
+                        }
+                    });
+                }
+
+
+                $('#populateReport').click( function(){
+                    var tValue = $('#tValue').val();
+                    console.log(tValue);
+                    getResponse(tValue);
+                });
+
+                $("#btnExport").click(function (e) {
+                    tableToExcel('reportTable', 'RH-ANC Report');
+                    e.preventDefault();
+                });
+                $("#btnBack").click(function (e) {
+                    reportNotNull=false;
+                    window.history.go(-1);
+                });
+                $("#btnBack2").click(function (e) {
+                    reportNotNull=false;
+                    window.history.go(-1);
+                });
+                $("#btnHome").click(function (e) {
+                    var hrefURL=dhisBaseURL.substring(0,dhisBaseURL.length-3);
+                    window.location.href = hrefURL+'dhis-web-dashboard-integration/index.action';
+                });
+                $("#btnPrint").click(function (e) {
+                    var headstr = "<html><head><title></title></head><body>";
+                    var footstr = "</body>";
+                    var reportName=document.getElementById('reportName').innerHTML;
+                    var newstr = document.all.item('tableContainer').innerHTML;
+                    var oldstr = document.body.innerHTML;
+                    document.body.innerHTML = headstr+reportName+newstr+footstr;
+                    window.print();
+                    document.body.innerHTML = oldstr;
+                });
+
+                
+            });
+        </script>
+
+
+    </head>
+
+    <body id="pageBody">
+        <div id="navigation" class="navbar navbar-default navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <span>
+                        <a class="navbar-brand" href="#">
+                            <img src="assets/img/news.png" width="35px" height="35px">
+                            &NonBreakingSpace;
+                            <b>[Custom-Reports]</b>
+                        </a>
+                        <label>
+                            <span id="btnHome" class="navbar-fixed-top" style="padding-left:90%; padding-top: 20px;">
+                                <div class="label btn-primary">&nbsp;&nbsp;Home&nbsp;&nbsp;</div>
+                            </span>
+                        </label>
+                    </span>
+                </div>
+                <div class="navbar-collapse collapse">
+                    <ul class="nav navbar-nav"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" id="page" style="padding-top: 60px">
+
+            <div class="container" id="reportInside">
+                <div class="row">
+                    <div class="col-md-8" id="reportName">
+                        <label><span class="label label-primary">High Absenteeism Report</span></label>
+                    </div>
+                    <div class="col-md-2">
+                        <div style="float: left"><label><span class="label btn-success" id="btnBack">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Back&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></label></div>
+                    </div>
+                    <div class="col-md-1">
+                        <div style="float: right"><label><span class="label btn-success" id="btnExport">&nbsp;Export to Excel&nbsp;</span></label></div>
+                    </div>
+                    <div class="col-md-1">
+                        <div style="float: left"><label><span class="label btn-success" id="btnPrint">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Print&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></label></div>
+                    </div>
+                </div>
+
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-6"  id="reportTags"></div>
+                        <div class="col-md-6">
+                        </div>
+                    </div>
+                    <div class="row" style="margin-top: 40px">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="tValue">Enter threshold value</label>
+                                <br/>
+                                <input type="text" id="tValue" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="col-md-3" id="populateReport" style="margin-top: 24px">
+                                <button type="button" class="btn btn-default" aria-label="Left Align">
+                                    Generate Report
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-12" id="tableContainer" style="padding-top: 20px">
+                        <table class="bordered" id="reportTable" style="display: none">
+                            <tr>
+                                <th>School</th>
+                                <th>Absenteeism Rate</th>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
